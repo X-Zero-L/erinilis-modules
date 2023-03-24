@@ -23,12 +23,11 @@ async def fetch_token(API_KEY=None, SECRET_KEY=None):
     req = await aiorequests.post(TOKEN_URL, post_data, timeout=10)
     result = json.loads(await req.text)
 
-    if ('access_token' in result.keys() and 'scope' in result.keys()):
-        if not 'brain_all_scope' in result['scope'].split(' '):
-            raise Exception('please ensure has check the ability')
-        return result['access_token']
-    else:
+    if 'access_token' not in result.keys() or 'scope' not in result.keys():
         raise Exception('please overwrite the correct API_KEY and SECRET_KEY')
+    if 'brain_all_scope' not in result['scope'].split(' '):
+        raise Exception('please ensure has check the ability')
+    return result['access_token']
 
 
 async def ocr_text(img_path=None, img_url=None):
@@ -36,7 +35,7 @@ async def ocr_text(img_path=None, img_url=None):
         raise Exception('img_path or img_url is None.')
 
     token = await fetch_token()
-    image_url = OCR_URL + "?access_token=" + token
+    image_url = f"{OCR_URL}?access_token={token}"
     file_content = None
     if img_path:
         async with aiofiles.open(img_path, 'rb') as fp:
@@ -48,12 +47,12 @@ async def ocr_text(img_path=None, img_url=None):
     post_data = urlencode({'image': base64.b64encode(file_content)})
     result = await aiorequests.post(image_url, post_data, timeout=10)
     json_data = await result.json(object_hook=Dict)
-    err = json_data.get('error_code')
-    if err and err == 18:  # QPS
-        await asyncio.sleep(1)
-        return await ocr_text(img_path=img_path, img_url=img_url)
-    elif err:
-        # https://cloud.baidu.com/doc/OCR/s/dk3h7y5vr
-        raise Exception(json_data.error_msg)
+    if err := json_data.get('error_code'):
+        if err == 18:  # QPS
+            await asyncio.sleep(1)
+            return await ocr_text(img_path=img_path, img_url=img_url)
+        else:
+            # https://cloud.baidu.com/doc/OCR/s/dk3h7y5vr
+            raise Exception(json_data.error_msg)
 
     return json_data

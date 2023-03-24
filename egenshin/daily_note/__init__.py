@@ -45,9 +45,7 @@ async def main(bot, ev):
         if re.findall(r'[关禁不][闭用要]提醒', text):
             await bot.finish(ev, await dn.remind(False))
 
-        remind_reg = re.findall(r'([开启打]?[启用开]?提醒)(\d+)?', text)
-
-        if remind_reg:
+        if remind_reg := re.findall(r'([开启打]?[启用开]?提醒)(\d+)?', text):
             _, once_remind = remind_reg[0]
             await bot.finish(ev, await dn.remind(once_remind=once_remind))
 

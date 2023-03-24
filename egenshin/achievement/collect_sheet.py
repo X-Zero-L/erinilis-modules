@@ -69,9 +69,7 @@ def get_all_achievements26_api():
 
 def get_row_value(row):
     info = row.get('2')
-    if not info:
-        return ''
-    return str(row['2'][1])
+    return str(row['2'][1]) if info else ''
 
 
 @cache(ttl=timedelta(hours=24), arg_key='url')
@@ -83,7 +81,7 @@ async def request_raw_data(url):
     if not text:
         raise Exception('获取数据失败, 很可能是数据源缓存问题, 请稍后再试')
     sheet = text[0][-1][0]['c'][1]
-    return [i for i in sheet.values()]
+    return list(sheet.values())
 
 
 async def request_data(top_type, url, keep_head, keep_row, field_count,
@@ -100,15 +98,12 @@ async def request_data(top_type, url, keep_head, keep_row, field_count,
 
 
         name = str(data)
-        
+
         if name in UNACTUATED:
             continue
 
-        if not top_type:
+        if not top_type or top_type == data.top_type:
             result[name] = data
-        elif top_type == data.top_type:
-            result[name] = data
-
     return result
 
 
@@ -122,9 +117,9 @@ async def achievements_sheet(top_type='天地万象'):
     # data24 = await request_data(*((top_type, ) + get_all_achievements24_api()))
     data25 = await request_data(*((top_type, ) + get_all_achievements25_api()))
     data26 = await request_data(*((top_type, ) + get_all_achievements26_api()))
-    
 
-    result.update(data)
+
+    result |= data
     # result.update(data20)
     # result.update(data21)
     # result.update(data22)

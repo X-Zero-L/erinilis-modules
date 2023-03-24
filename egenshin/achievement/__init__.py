@@ -40,7 +40,7 @@ prefix = '原神'
 
 
 @support_private(sv)
-@sv.on_prefix((prefix + '成就', ))
+@sv.on_prefix((f'{prefix}成就', ))
 async def achievement_main(bot, ev):
     text = ev.message.extract_plain_text().strip()
     detail = ev.get('detail', False)
@@ -49,9 +49,9 @@ async def achievement_main(bot, ev):
         await bot.finish(ev, sv_help, at_sender=True)
 
     try:
-        img_list = []
         proxy_url = []
 
+        img_list = []
         for msg in ev.message:
             if msg.type == 'image':
                 # 如果直接发了图片
@@ -59,10 +59,11 @@ async def achievement_main(bot, ev):
 
             if msg.type == 'text':
                 # 如果使用图片地址
-                for text in msg.data['text'].split('\r\n'):
-                    if re.search(r'https?://', text):
-                        proxy_url.append(text)
-
+                proxy_url.extend(
+                    text
+                    for text in msg.data['text'].split('\r\n')
+                    if re.search(r'https?://', text)
+                )
         m = ev.message
         user_id = ev.user_id
         if m and m[0]['type'] == 'at':
@@ -79,16 +80,16 @@ async def achievement_main(bot, ev):
         if proxy_url:
             await bot.send(ev, '正在获取图片,以及更新成就...', at_sender=True)
             failed_list, ocr_success, added_len = await achi.from_proxy_url(proxy_url)
-            failed = '\n'.join(failed_list)
-            if failed:
+            if failed := '\n'.join(failed_list):
                 await bot.send(ev, f'获取失败的图片链接:\n{failed}', at_sender=True)
 
         if ocr_success:
             ocr_success_msg = ' '.join([f'{i + 1}({x})' for i, x in enumerate(ocr_success)])
-            await bot.send(ev,
-                           f'本次识别结果增加了{added_len}个记录 过程:图片顺序(识别到的成就个数)\n' +
-                           ocr_success_msg,
-                           at_sender=True)
+            await bot.send(
+                ev,
+                f'本次识别结果增加了{added_len}个记录 过程:图片顺序(识别到的成就个数)\n{ocr_success_msg}',
+                at_sender=True,
+            )
 
         result = await achi.unfinished
 
@@ -102,7 +103,7 @@ async def achievement_main(bot, ev):
                 ev,
                 f'绑定的UID[{achi.info.uid}]记录的成就太少,请补充成就后再查看,发送 原神成就? 查看如何使用',
                 at_sender=True)
-            
+
     except CanceledException:
         pass
     except Exception as e:
@@ -111,7 +112,7 @@ async def achievement_main(bot, ev):
 
 
 @support_private(sv)
-@sv.on_prefix(('重置' + prefix + '成就', ))
+@sv.on_prefix((f'重置{prefix}成就', ))
 async def main(bot, ev):
     try:
         achi = achievement(ev.user_id)
@@ -123,7 +124,7 @@ async def main(bot, ev):
 
 
 @support_private(sv)
-@sv.on_prefix(('a' + prefix + '成就', ))
+@sv.on_prefix((f'a{prefix}成就', ))
 async def main(bot, ev):
     ev['detail'] = True
     await achievement_main(bot, ev)

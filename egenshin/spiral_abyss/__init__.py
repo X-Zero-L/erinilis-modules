@@ -23,7 +23,7 @@ sv = Service(
 prefix = '原神'
 
 
-@sv.on_prefix((prefix + '深渊速查', prefix + '深境速查'))
+@sv.on_prefix((f'{prefix}深渊速查', f'{prefix}深境速查'))
 async def main(bot, ev):
     keyword = ev.message.extract_plain_text().strip() or '12'
     if not keyword.isdigit() or int(keyword) < 9 or int(keyword) > 12:
@@ -37,7 +37,7 @@ async def main(bot, ev):
         raise e
 
 
-@sv.on_prefix((prefix + '深渊使用率', prefix + '深境使用率'))
+@sv.on_prefix((f'{prefix}深渊使用率', f'{prefix}深境使用率'))
 async def main(bot, ev):
     keyword = ev.message.extract_plain_text().strip() or '12'
     if not keyword.isdigit() or int(keyword) < 9 or int(keyword) > 12:
@@ -51,7 +51,7 @@ async def main(bot, ev):
         raise e
 
 
-@sv.on_prefix((prefix + '深渊配队', prefix + '深境配队'))
+@sv.on_prefix((f'{prefix}深渊配队', f'{prefix}深境配队'))
 async def main(bot, ev):
     keyword = ev.message.extract_plain_text().strip() or '12'
     if not keyword.isdigit() or int(keyword) < 9 or int(keyword) > 12:
@@ -63,7 +63,7 @@ async def main(bot, ev):
 
     user_info = await info(uid=uid, qid=ev.user_id, group_id=ev.group_id)
     if user_info.retcode != 0:
-        await bot.finish(ev, '请确保ys#能正确显示玩家信息, api:[%s]' % user_info.message)
+        await bot.finish(ev, f'请确保ys#能正确显示玩家信息, api:[{user_info.message}]')
 
     try:
         img = await recommend_team(floor=keyword, avatars=user_info.data.avatars)

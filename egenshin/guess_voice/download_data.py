@@ -58,14 +58,12 @@ async def get_character_list():
         'style': 'display:block;'
     })
     char_list = char_list.find_all(attrs={'class': 'center'})
-    res = list(set(map(lambda x: x.find('a').attrs['title'], char_list)))
-    res.sort()
-    return res
+    return sorted(set(map(lambda x: x.find('a').attrs['title'], char_list)))
 
 
 # 获取角色语音
 async def get_voice_info(character_name: str):
-    hoshino.logger.info('获取数据: %s' % character_name)
+    hoshino.logger.info(f'获取数据: {character_name}')
     html = await aiorequests.get(BASE_URL + API['voice'] % character_name)
     soup = BeautifulSoup(await html.text, 'lxml')
     if soup.find(text='本页面目前没有内容。您可以在其他页面中'):
@@ -130,7 +128,7 @@ async def update_voice_data():
                 elif language == '韩':
                     kor = path
 
-                hoshino.logger.info('下载成功: %s -> %s' % (char, path))
+                hoshino.logger.info(f'下载成功: {char} -> {path}')
 
             data.append({
                 'title': v['title'],
@@ -164,7 +162,7 @@ async def voice_list_by_mys():
 
 async def voice_detail_by_mys(content_id):
     try:
-        url = 'https://bbs.mihoyo.com/ys/obc/content/%s/detail?bbs_presentation_style=no_header' % content_id
+        url = f'https://bbs.mihoyo.com/ys/obc/content/{content_id}/detail?bbs_presentation_style=no_header'
         res = await aiorequests.get(url, timeout=30)
     except aiorequests.exceptions.ConnectionError:
         raise

@@ -79,14 +79,12 @@ class achievement:
                 for word in result.words_result:
                     word = word.words.strip()
                     word = zhconv.convert(word, 'zh-hans').strip('“”') # 转换简体字
-                    local_fix = FIX_WORD.get(word)
-
-                    if not local_fix: # 如果本地没有修复的词, 就使用github上的
-                        gh_fix = await gh_fix_word()
-                        word = gh_fix.get(word, word)
-                    else:
+                    if local_fix := FIX_WORD.get(word):
                         word = local_fix
 
+                    else:
+                        gh_fix = await gh_fix_word()
+                        word = gh_fix.get(word, word)
                     word = remove_special_char(word)
 
                     if len(word) == 1:
@@ -103,8 +101,7 @@ class achievement:
                     for v in WORD_REPLACE.items():
                         word = word.replace(*v)
 
-                    word_filter = list(filter(lambda s: word in s, all_keys))
-                    if word_filter:
+                    if word_filter := list(filter(lambda s: word in s, all_keys)):
                         ocr_count += 1
                         completed.add(all_achievement[word_filter[0]].name)
                 ocr_success.append(ocr_count)

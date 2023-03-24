@@ -38,11 +38,11 @@ async def handle(bot, ev):
         nickname = qq_info['nickname']
     if not uid:
         uid = query.get_uid_by_qid(qid)
-        if not uid:
-            await bot.finish(
-                ev,
-                '请在原有指令后面输入游戏uid,只需要输入一次就会记住下次直接使用{comm}获取就好\n例如:{comm}105293904'
-                .format(comm='ys#'))
+    if not uid:
+        await bot.finish(
+            ev,
+            '请在原有指令后面输入游戏uid,只需要输入一次就会记住下次直接使用{comm}获取就好\n例如:{comm}105293904'
+            .format(comm='ys#'))
     query.save_uid_by_qid(qid, uid)
     raw_data = await query.info(uid=uid, qid=qid, group_id=ev.group_id)
 

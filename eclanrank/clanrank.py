@@ -33,10 +33,7 @@ def get_rank(keyword):
 
     info, ts = query.get_rank(**params)
 
-    if not info:
-        return '木有找到相关的工会'
-
-    return print_rank(info, ts=ts)
+    return print_rank(info, ts=ts) if info else '木有找到相关的工会'
 
 
 def print_rank(info, new_info=None, ts=None):
@@ -61,14 +58,13 @@ def print_rank(info, new_info=None, ts=None):
             rank_ext = f'▼{rank_calc}' if rank_calc > 0 else f'▲{abs(rank_calc)}'
             damage_ext = f'▲{format(damage_calc, ",")}'
             data = new
-        data.data['ts'] = ts if ts else time.strftime(config.str.ts_formet, time.localtime())
+        data.data['ts'] = ts or time.strftime(config.str.ts_formet, time.localtime())
         data.data['rank_ext'] = rank_ext
         data.data['score'] = format(data.damage, ",")
         data.data['score_ext'] = damage_ext
         data.data['process'] = util.calc_hp(data.damage)
         message.append(*Message(config.str.print_rank_info.format(**data.data)))
-        line = line_db.get('line', [])
-        if line:
+        if line := line_db.get('line', []):
             target = util.filter_list(line, lambda x: x['damage'] > data.damage)
             if not target:
                 info, ts = query.get_rank(rank=1)

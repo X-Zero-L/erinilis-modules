@@ -13,18 +13,18 @@ def __web_sign2__(j, r):
     p = list(range(256))
     o = []
     v = len(j)
-    for q in range(0, 256):
+    for q in range(256):
         qv = q % v
         a[q] = ord(j[qv:qv + 1][0])
         p[q] = int(q)
     u = 0
-    for q in range(0, 256):
+    for q in range(256):
         u = (u + p[q] + a[q]) % 256
         t = p[q]
         p[q] = p[u]
         p[u] = t
     i = u = 0
-    for q in range(0, len(r)):
+    for q in range(len(r)):
         i = (i + 1) % 256
         u = (u + p[i]) % 256
         t = p[i]
@@ -77,7 +77,7 @@ def gen_web_sign():
     except json.JSONDecodeError:
         info = json.loads(text[3:])
 
-    if not info['errno'] == 0:
+    if info['errno'] != 0:
         return False, 0
     global sign, timestamp
 
@@ -100,7 +100,7 @@ def get_sign():
     bduss: str = config.BDUSS
     s_time = int(time.time())
     dev_uid = 'O|' + hashlib.new('md5', bduss.encode()).hexdigest().upper()
-    bduss_sha1 = hashlib.sha1(str.encode(bduss)).hexdigest() + f'{uid}'
+    bduss_sha1 = f'{hashlib.sha1(str.encode(bduss)).hexdigest()}{uid}'
     key = b'\x65\x62\x72\x63\x55\x59\x69\x75\x78\x61\x5a\x76\x32\x58\x47\x75\x37\x4b\x49\x59\x4b\x78\x55\x72\x71\x66\x6e\x4f\x66\x70\x44\x46'
     bduss_sha1 = bduss_sha1.encode() + key
     rand_sha1 = bduss_sha1 + str(s_time).encode() + dev_uid.encode()

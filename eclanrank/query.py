@@ -63,7 +63,7 @@ def get_rank(
     }
     if rank:
         last_api = '/rank/'
-        rank = math.floor(int(rank))
+        rank = math.floor(rank)
 
     if name:
         last_api = '/name/'
@@ -75,7 +75,7 @@ def get_rank(
 
     if score:
         last_api = '/score/'
-        rank = math.floor(int(score))
+        rank = math.floor(score)
 
     if ids:
         last_api = '/fav/'
@@ -98,9 +98,12 @@ def get_rank(
 
     if not bool(data):
         return False, ''
-    info['ts'] = info['ts'] if info['ts'] else time.time()
-    return list(get_rank_response(i) for i in data), datetime.datetime.fromtimestamp(info['ts']).strftime(
-        config.str.ts_formet)
+    info['ts'] = info['ts'] or time.time()
+    return [
+        get_rank_response(i) for i in data
+    ], datetime.datetime.fromtimestamp(info['ts']).strftime(
+        config.str.ts_formet
+    )
 
 
 def get_line() -> List or bool:
@@ -110,6 +113,4 @@ def get_line() -> List or bool:
     if info['code'] > 0:
         logger.info(info['msg'])
         return False
-    if not bool(info['data']):
-        return False
-    return info['data']
+    return info['data'] if bool(info['data']) else False

@@ -17,21 +17,19 @@ class material:
         self.uid = uid
 
     def get_job_id(self):
-        return '%s%s' % (self.group, self.uid)
+        return f'{self.group}{self.uid}'
 
     @staticmethod
     async def show(name):
         data = material_data.get(name)
-        if not data or not data.text:
-            return '木有 %s 材料信息' % name
-        return data.text
+        return f'木有 {name} 材料信息' if not data or not data.text else data.text
 
     async def notify(self):
         data = material_data.get(self.name)
         msg = str(MessageSegment.at(self.uid))
-        msg += '你设定的材料(%s)已刷新' % self.name
+        msg += f'你设定的材料({self.name})已刷新'
         if data:
-            msg += ', 可以使用 查看材料#%s 查看详细信息' % self.name
+            msg += f', 可以使用 查看材料#{self.name} 查看详细信息'
         await bot.send_group_msg(group_id=self.group, message=msg)
         self.set_mat_data(None)
 
@@ -44,17 +42,12 @@ class material:
     def get_mat_data(self):
         job_id = self.get_job_id()
         mat_data = material_db.get(job_id, {})
-        if mat_data and mat_data[self.name]:
-            return mat_data[self.name]
-        return None
+        return mat_data[self.name] if mat_data and mat_data[self.name] else None
 
     @staticmethod
     def get_material_time(name):
         time_list = material_data.time
-        for time in time_list:
-            if name in time_list[time]:
-                return time
-        return 0
+        return next((time for time in time_list if name in time_list[time]), 0)
 
     async def mark(self, name, format_time=None):
         self.name = name
@@ -93,7 +86,7 @@ class material:
             'name': self.name
         })
 
-        return str(MessageSegment.at(self.uid)) + '将于%s小时后 %s 通知你收集材料' % (time, format_time)
+        return f'{str(MessageSegment.at(self.uid))}将于{time}小时后 {format_time} 通知你收集材料'
 
     async def status(self):
         mat_list = material_db.get(self.get_job_id(), {})
@@ -101,15 +94,10 @@ class material:
             return '你还没有任何设定的材料, 请使用 收集材料#材料名字 进行设定'
         msg = []
         for mat in mat_list:
-            data = mat_list[mat]
-            if not data:
-                continue
-            msg.append('材料: %s  刷新时间: %s' % (data['name'], data['datetime']))
+            if data := mat_list[mat]:
+                msg.append(f"材料: {data['name']}  刷新时间: {data['datetime']}")
 
-        if not msg:
-            return '你还没有任何设定的材料, 请使用 收集材料#材料名字 进行设定'
-
-        return '\n'.join(msg)
+        return '\n'.join(msg) if msg else '你还没有任何设定的材料, 请使用 收集材料#材料名字 进行设定'
 
 
 async def init_material_job():

@@ -30,12 +30,12 @@ def set_proxy(enable, proxyIp, IgnoreIp):
         internet_set_option(0, INTERNET_OPTION_REFRESH, 0, 0)
         internet_set_option(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
     except Exception as e:
-        print("ERROR: " + str(e.args))
+        print(f"ERROR: {str(e.args)}")
 
 
 # 开启，定义代理服务器ip及端口，忽略ip内容(分号分割)
 def enable_proxy():
-    proxyIP = "127.0.0.1:%s" % config.proxy_port
+    proxyIP = f"127.0.0.1:{config.proxy_port}"
     IgnoreIp = "172.*;192.*;"
     set_proxy(1, proxyIP, IgnoreIp)
 
@@ -111,8 +111,6 @@ class Addon(object):
             print('正在寻找数据中...')
 
     def response(self, flow: mitmproxy.http.HTTPFlow):
-        if "mihoyo.com/event/gacha_info/api/getGachaLog" in flow.request.url:
-            pass
         if "webstatic.mihoyo.com/hk4e/event/e20190909gacha/index.html" in flow.request.url:
             flow.response.set_text('''
 <!DOCTYPE html>
@@ -145,7 +143,7 @@ def from_log_file():
         print('请在游戏内先F3打开抽卡页面后,点击下面的历史记录后在继续')
         os.system('pause')
         from_log_file()
-    handle_bind(url.group(1))
+    handle_bind(url[1])
 
 
 def menu():

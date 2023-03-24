@@ -29,7 +29,7 @@ async def bind():
         info['authkey'] = urllib.parse.unquote(authkey)
         info['region'] = region or 'cn_gf01'
         db[qq] = info
-    print(f'%s %s 成功绑定原神卡池记录' % (region, qq))
+    print(f'{region} {qq} 成功绑定原神卡池记录')
     return '绑定成功'
 
 
@@ -39,7 +39,7 @@ async def get_xlsx(uid: str):
         return "uid error", 404
     if not xlsx_out_dir.exists():
         return "no xlsx directory", 404
-    filename = uid + '.xlsx'
+    filename = f'{uid}.xlsx'
     if not (xlsx_out_dir / filename).exists():
         return "Invalid file", 404
     response = await send_file(str(xlsx_out_dir / filename))

@@ -28,7 +28,6 @@ admins = set((admins if isinstance(admins, list) else [admins]) + _bot.config.SU
 
 
 @sv.on_message('group')  # 如果使用hoshino的分群管理取消注释这行 并注释下一行的 @_bot.on_message("group")
-# @_bot.on_message("group") # nonebot使用这
 async def eqa_main(*params):
     bot, ctx = (_bot, params[0]) if len(params) == 1 else params
 
@@ -44,26 +43,24 @@ async def eqa_main(*params):
     if isinstance(show_target, str):
         return await bot.send(ctx, await show_question(ctx, show_target))
 
-    # 删除设置的问题
-    del_target = util.get_msg_keyword(config['comm']['answer_delete'], msg, True)
-    if del_target:
+    if del_target := util.get_msg_keyword(
+        config['comm']['answer_delete'], msg, True
+    ):
         return await bot.send(ctx, await del_question(ctx, del_target))
 
-    # 清空设置的问题
-    del_all = util.get_msg_keyword(config['comm']['answer_delete_all'], msg, True)
-    if del_all:
+    if del_all := util.get_msg_keyword(
+        config['comm']['answer_delete_all'], msg, True
+    ):
         return await bot.send(ctx, await del_question(ctx, del_all, True))
 
-    # 处理回答所有人的问题
-    keyword = util.get_msg_keyword(config['comm']['answer_all'], msg, True)
-    if keyword:
+    if keyword := util.get_msg_keyword(
+        config['comm']['answer_all'], msg, True
+    ):
         msg = await ask(ctx, keyword, False)
         if msg:
             return await bot.send(ctx, msg)
 
-    # 处理回答自己的问题
-    keyword = util.get_msg_keyword(config['comm']['answer_me'], msg, True)
-    if keyword:
+    if keyword := util.get_msg_keyword(config['comm']['answer_me'], msg, True):
         msg = await ask(ctx, keyword, True)
         if msg:
             return await bot.send(ctx, msg)
@@ -119,9 +116,9 @@ async def ask(ctx, keyword, is_me):
                 return '图片缓存失败了啦！'
         message.append(ms)
 
-    # 判断是否是正则表达式的问答
-    reg_qus = util.get_msg_keyword(config['str']['reg_match_cmd'], qus, True)
-    if reg_qus:
+    if reg_qus := util.get_msg_keyword(
+        config['str']['reg_match_cmd'], qus, True
+    ):
         try:
             re.compile(reg_qus)
         except:
@@ -172,15 +169,12 @@ async def answer(ctx, _reg_flag=False):
         x['user_id'] in admins if super_admin_is_all_group else False))
 
     # 木有在这群
-    if not ans_list and _reg_flag:
-        return False
-    elif not ans_list:
-        return await answer(ctx, True)
-
+    if not ans_list:
+        return False if _reg_flag else await answer(ctx, True)
     # 是否优先自己的回答 是的话则选择自己的列表
     if priority_self_answer:
         self_list = util.filter_list(ans_list, lambda x: user_id == x['user_id'])
-        ans_list = self_list if self_list else ans_list
+        ans_list = self_list or ans_list
 
     # 判断规则是否随机
     if multiple_question_random_answer:
@@ -191,20 +185,21 @@ async def answer(ctx, _reg_flag=False):
         ans = ans_list[-1]
 
     # 判断是否是设置为自己的回复
-    if ans['is_me']:
-        # 如果是自己的回复 但是人不对就返回
-        if ans['user_id'] != user_id:
-            return False
+    if ans['is_me'] and ans['user_id'] != user_id:
+        return False
 
     ans_msg = ans['message']
     _msg = ans_msg[0]
-    if len(ans_msg) == 1:  # str(Message(msg))
-        if _msg['type'] == 'text' and _msg['data']['text'][:1] == config['str']['cmd_head_str']:
-            ctx['raw_message'] = _msg['data']['text'][1:]
-            ctx['message'] = Message(ctx['raw_message'])
-            ctx['to_me'] = True
-            _bot.on_message(ctx)
-            return False
+    if (
+        len(ans_msg) == 1
+        and _msg['type'] == 'text'
+        and _msg['data']['text'][:1] == config['str']['cmd_head_str']
+    ):
+        ctx['raw_message'] = _msg['data']['text'][1:]
+        ctx['message'] = Message(ctx['raw_message'])
+        ctx['to_me'] = True
+        _bot.on_message(ctx)
+        return False
     if _is_reg and _msg['type'] == 'text' and _msg['data']['text'][:1] == config['str']['reg_match_cmd']:
         text = _msg['data']['text'][1:] or str(Message(ans_msg[1:]))
         ans_msg = Message(re.sub(ans['qus'], text, msg))
@@ -212,15 +207,15 @@ async def answer(ctx, _reg_flag=False):
     # 如果使用了base64 那么需要把信息里的图片转换一下
     if config['image_base64']:
         ans['message'] = util.message_image2base64(ans['message'])
-    
+
     for value in ans['message']:
         if value['type'] == 'image':
             # 处理一下绝对路径问题
             img_path = Path(value['data']['file'])
             img_name = img_path.stem + img_path.suffix
             new_path = Path(__file__).parent / config['cache_dir'] / 'img' / img_name
-            value['data']['file'] = 'file:///' + str(new_path)
-            
+            value['data']['file'] = f'file:///{str(new_path)}'
+
     # 最后就是把验证成功的消息返回去
     return ans_msg
 
@@ -240,7 +235,7 @@ async def show_question(ctx, target, show_all=False):
         is_admin = util.is_group_admin(ctx) or is_super_admin
 
         # 如果跟了@人的对象
-        target = list(int(i) for i in re.findall(r'\[CQ:at,qq=(\d+)]', target.strip()))
+        target = [int(i) for i in re.findall(r'\[CQ:at,qq=(\d+)]', target.strip())]
         is_at = bool(target)
 
         # 如果关了群友查询别人的选项
@@ -258,20 +253,25 @@ async def show_question(ctx, target, show_all=False):
     for qq in target:
         head = ''
         priority_list = []
-        if not show_all:  # 不是显示全部的话就筛选个人
-            # 获取当前qq设置问题列表
-            if qq in admins:
-                ans_list = util.get_all_ans_list_by_qq(qq, db_list)
-            else:
-                ans_list = util.get_all_ans_list_by_qq(qq, ans_list)
-
-        else:
+        if show_all:
             # 这是所有人的问答
-            all_list = util.filter_list(ans_list, lambda x: True in list(not i['is_me'] for i in x))
+            all_list = util.filter_list(
+                ans_list, lambda x: True in [not i['is_me'] for i in x]
+            )
             # 这人个人问答
-            priority_list = util.filter_list(ans_list, lambda x: True in list(i['is_me'] for i in x))
+            priority_list = util.filter_list(
+                ans_list, lambda x: True in [i['is_me'] for i in x]
+            )
 
-            ans_list = sum(list(util.get_all_ans_list_by_qq(q, db_list) for q in admins), all_list)
+            ans_list = sum(
+                (util.get_all_ans_list_by_qq(q, db_list) for q in admins),
+                all_list,
+            )
+
+        elif qq in admins:
+            ans_list = util.get_all_ans_list_by_qq(qq, db_list)
+        else:
+            ans_list = util.get_all_ans_list_by_qq(qq, ans_list)
 
         # 如果是多个人 那就加个名字区别一下
         if is_at:
@@ -290,16 +290,16 @@ async def show_question(ctx, target, show_all=False):
             pri_str_list = await util.cq_msg2str(pri_str_list, group_id=ctx['group_id'])
             priority_msg = "\n个人问答:\n" + print_all_split.join(pri_str_list)
 
-        msg = "{}{}{}{}\n".format(msg, head, msg_context if ans_list else f'还没有设置过问题呢', priority_msg)
+        msg = f"{msg}{head}{msg_context if ans_list else '还没有设置过问题呢'}{priority_msg}\n"
     return msg
 
 
 # 删除问题的函数
 async def del_question(ctx, target, clear=False):
     target = util.get_message_str(target).strip()
-    # 判断是否是正则表达式的问答
-    reg_qus = util.get_msg_keyword(config['str']['reg_match_cmd'], target, True)
-    if reg_qus:
+    if reg_qus := util.get_msg_keyword(
+        config['str']['reg_match_cmd'], target, True
+    ):
         _db = reg_db  # 切换为正则表达式的数据库
         target = reg_qus
     else:
@@ -313,15 +313,13 @@ async def del_question(ctx, target, clear=False):
     is_group_admin = util.is_group_admin(ctx) if config['rule']['only_admin_can_delete'] else True
     is_admin = is_group_admin or is_super_admin
 
-    # 如果直接清空
     if clear:
-        if is_super_admin:
-            util.delete_message_image_file(ans_list)
-            _db.pop(target)
-            return '清空成功~'
-        else:
+        if not is_super_admin:
             return '木有权限啦~~'
 
+        util.delete_message_image_file(ans_list)
+        _db.pop(target)
+        return '清空成功~'
     if config['rule']['question_del_last']:
         ans_list.reverse()
 
@@ -329,27 +327,26 @@ async def del_question(ctx, target, clear=False):
 
     for index, value in enumerate(ans_list):
         # 如果不是本群就跳过  或者 是超级管理员的话 就继续删除
-        if value['group_id'] != ctx['group_id'] and not (is_super_admin and value['user_id'] in admins):
+        if value['group_id'] != ctx['group_id'] and (
+            not is_super_admin or value['user_id'] not in admins
+        ):
             continue
         # 管理员则直接删除第一个元素
         if is_admin:
-            if not config['rule']['can_delete_super_admin_qa'] and \
-                    value['user_id'] in admins and \
-                    not is_super_admin:
-                # 不允许删除超级管理员的设置
-                continue
-            else:
+            if (
+                config['rule']['can_delete_super_admin_qa']
+                or value['user_id'] not in admins
+                or is_super_admin
+            ):
                 is_del_flag = True
                 util.delete_message_image_file(value)
                 ans_list.pop(index)
                 break
-        else:
-            # 如果不是管理员 就删除自己的第一个元素
-            if value['user_id'] == ctx['user_id']:
-                is_del_flag = True
-                util.delete_message_image_file(value)
-                ans_list.pop(index)
-                break
+        elif value['user_id'] == ctx['user_id']:
+            is_del_flag = True
+            util.delete_message_image_file(value)
+            ans_list.pop(index)
+            break
 
     # 表示删除了元素 可以更新数据库了
     if is_del_flag:

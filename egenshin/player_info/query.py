@@ -77,9 +77,8 @@ def __get_ds__(query, body=None):
     i = str(int(time.time()))
     r = ''.join(random.sample(string.ascii_lowercase + string.digits, 6))
     q = '&'.join([f'{k}={v}' for k, v in query.items()])
-    c = __md5__("salt=" + n + "&t=" + i + "&r=" + r + '&b=' + (body or '') +
-                '&q=' + q)
-    return i + "," + r + "," + c
+    c = __md5__(((f"salt={n}&t={i}&r={r}&b=" + (body or '') + '&q=') + q))
+    return f"{i},{r},{c}"
 
 cookie_info_cache = {}
 
@@ -88,15 +87,17 @@ async def get_cookie_info(cookie):
     if cookie_info_cache.get(account_id):
         return cookie_info_cache[account_id]
 
-    url = 'https://api-takumi-record.mihoyo.com/game_record/card/wapi/getGameRecordCard?uid=' + account_id
+    url = f'https://api-takumi-record.mihoyo.com/game_record/card/wapi/getGameRecordCard?uid={account_id}'
 
     headers = {
         'x-rpc-app_version': '2.16.1',
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) miHoYoBBS/2.11.1',
         'x-rpc-client_type': '5',
-        'x-rpc-device_id': ''.join(random.choices(string.ascii_lowercase + '1234567890', k=32)),
+        'x-rpc-device_id': ''.join(
+            random.choices(f'{string.ascii_lowercase}1234567890', k=32)
+        ),
         'Cookie': cookie,
-        'ds': __get_ds__({}, '')
+        'ds': __get_ds__({}, ''),
     }
     res = await aiorequests.get(url=url, headers=headers, timeout=5)
     json_data = await res.json(object_hook=Dict)

@@ -54,10 +54,15 @@ def init_db(db_dir, db_name='db.sqlite', tablename=''):
 
 # 寻找MessageSegment里的某个关键字的位置
 def find_ms_str_index(ms, keyword, is_first=False):
-    for index, item in enumerate(ms):
-        if item['type'] == 'text' and re.search(format_reg(keyword, is_first), item['data']['text']):
-            return index
-    return -1
+    return next(
+        (
+            index
+            for index, item in enumerate(ms)
+            if item['type'] == 'text'
+            and re.search(format_reg(keyword, is_first), item['data']['text'])
+        ),
+        -1,
+    )
 
 
 # 下载图片到本地 并返回message图片类型
@@ -73,10 +78,9 @@ def ms_handler_image(ms, msg_diy=False, cache_dir='', dir_name='img', b64=False)
         return False
     base64_suffix = '.base64' if b64 else ''
     file_name = get_path(cache_dir, dir_name, f'{uuid.uuid1().hex}.{imghdr.what(None, pic.content)}{base64_suffix}')
-    fp = open(file_name, 'wb')
-    content = bytes(pic2b64(pic.content), encoding="utf8") if b64 else pic.content
-    fp.write(content)
-    fp.close()
+    with open(file_name, 'wb') as fp:
+        content = bytes(pic2b64(pic.content), encoding="utf8") if b64 else pic.content
+        fp.write(content)
     protocol = '' if b64 else 'file:///'
     return MessageSegment.image(f'{protocol}{os.path.abspath(file_name)}')
 
@@ -108,11 +112,11 @@ def get_all_ans_list_by_qq(qq, ans_list):
 
 
 def get_qus_str_by_list(ans_list):
-    return set(i[0]['qus'] for i in ans_list)
+    return {i[0]['qus'] for i in ans_list}
 
 
 def pic2b64(pic) -> str:
-    return 'base64://' + base64.b64encode(pic).decode()
+    return f'base64://{base64.b64encode(pic).decode()}'
 
 
 def get_file_suffix(file_name: str) -> str:
@@ -128,7 +132,7 @@ def message_image2base64(message):
                     with open(url, encoding='utf8') as f:
                         message[index] = MessageSegment.image(f.read())
                 except FileNotFoundError:
-                    print('设置的图片丢失。。' + url)
+                    print(f'设置的图片丢失。。{url}')
     return message
 
 
@@ -136,13 +140,17 @@ def delete_message_image_file(message):
     message = message if isinstance(message, list) else [message]
     for value in message:
         # 首先取出message里的图片链接
-        urls = list(i['data']['file'] or i['data']['url'] for i in
-                    filter_list(value['message'], lambda x: x['type'] == 'image'))
+        urls = [
+            i['data']['file'] or i['data']['url']
+            for i in filter_list(
+                value['message'], lambda x: x['type'] == 'image'
+            )
+        ]
         # 如果包含file协议就删除
-        urls = list(i[8:] if 'file:///' in i else i for i in urls)
+        urls = [i[8:] if 'file:///' in i else i for i in urls]
         # 直接删除
         try:
-            ok = list(os.remove(i) for i in urls)
+            ok = [os.remove(i) for i in urls]
         except FileNotFoundError as e:
             print(e)
 
@@ -169,7 +177,7 @@ def get_message_str(message, is_reg=False):
             continue
         # AT
         if is_reg and ms['type'] == 'at':
-            res += 'at%s' % ms['data']['qq']
+            res += f"at{ms['data']['qq']}"
             continue
         res += str(ms)
     return res
@@ -181,7 +189,7 @@ async def cq_msg2str(msg: List[str] or Set[str], group_id=None):
     for index, value in enumerate(msg):
         at = re.match('\[CQ:at,qq=(\d+)', value)
         if at and group_id:
-            qq = int(at.group(1))
+            qq = int(at[1])
             try:
                 name = await get_group_member_name(group_id, qq)
                 msg[index] = f'@{name}'
@@ -191,6 +199,4 @@ async def cq_msg2str(msg: List[str] or Set[str], group_id=None):
                 # name = qq
                 # name = ''
                 msg.pop(index)
-                pass
-
     return msg

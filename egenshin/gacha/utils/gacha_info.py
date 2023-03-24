@@ -18,6 +18,6 @@ async def gacha_info(gacha_id):
     res = await aiorequests.get(BASE_URL % gacha_id + '/zh-cn.json')
 
     if res.status_code != 200:
-        raise Exception("error gacha_id: %s" % gacha_id)
+        raise Exception(f"error gacha_id: {gacha_id}")
 
     return await res.json(object_hook=Dict)

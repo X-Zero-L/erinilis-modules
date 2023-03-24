@@ -35,15 +35,15 @@ class wish_user:
         self.update_prob_info({'is_up': up})
 
     def inc_count(self, rank):
-        key = 'count_' + str(rank)
+        key = f'count_{str(rank)}'
         inc = self.get_prob_info().get(key, 1)
         self.update_prob_info({key: inc + 1})
 
     def _get_data(self):
-        self.data = DB.get('%s_%s' % (self.uid, self.gacha_type), {})
+        self.data = DB.get(f'{self.uid}_{self.gacha_type}', {})
 
     def save(self):
-        DB['%s_%s' % (self.uid, self.gacha_type)] = self.data
+        DB[f'{self.uid}_{self.gacha_type}'] = self.data
 
     def get_prob_info(self):
         self._get_data()

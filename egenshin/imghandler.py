@@ -65,20 +65,16 @@ def draw_text_by_line(img,
     """
     x, y = pos
     _, h = font.getsize("X")
-    if line_space is None:
-        y_add = math.ceil(1.3 * h)
-    else:
-        y_add = math.ceil(h + line_space)
+    y_add = math.ceil(1.3 * h) if line_space is None else math.ceil(h + line_space)
     draw = ImageDraw.Draw(img)
     row = ""  # 存储本行文字
     length = 0  # 记录本行长度
     for character in text:
         w, h = font.getsize(character)  # 获取当前字符的宽度
+        row += character
         if length + w * 2 <= max_length:
-            row += character
             length += w
         else:
-            row += character
             if center:
                 font_size = font.getsize(row)
                 x = math.ceil((img.size[0] - font_size[0]) / 2)

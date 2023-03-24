@@ -14,7 +14,10 @@ def get_pan_ua():
 
 def get_randsk_headers(ua=None, randsk=None):
     randsk = f'; BDCLND={randsk}' if randsk else ''
-    ua = ua if ua else 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.514.1919.810 Safari/537.36'
+    ua = (
+        ua
+        or 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.514.1919.810 Safari/537.36'
+    )
     return {
         'Referer': 'https://pan.baidu.com/disk/home?',
         'User-Agent': ua,
@@ -26,8 +29,8 @@ def get_real_url_by_dlink(dlink, urls: list = None, ua=None):
     if not dlink:
         return ''
     headers = {
-        'User-Agent': ua if ua else 'LogStatistic',  # 这里好坑啊 不能使用pan的ua
-        'Cookie': f'BDUSS={config.BDUSS};'
+        'User-Agent': ua or 'LogStatistic',
+        'Cookie': f'BDUSS={config.BDUSS};',
     }
     try:
         real_link = requests.get(dlink, headers=headers, timeout=30, allow_redirects=False)
@@ -36,9 +39,7 @@ def get_real_url_by_dlink(dlink, urls: list = None, ua=None):
         if real_link.status_code == 403 and urls:
             urls.pop(0)
             return get_real_url_by_dlink(urls[0], urls, ua=ua)
-        if real_link.status_code == 31360:
-            return 'bduss 已过期,请重新获取'
-        return ''
+        return 'bduss 已过期,请重新获取' if real_link.status_code == 31360 else ''
     except requests.exceptions.SSLError:
         if not urls or not isinstance(urls, list):
             return ''
@@ -52,11 +53,9 @@ def get_web_file_url(fs_id: list):
     url = f'https://pan.baidu.com/api/download?type=dlink&channel=chunlei&web=1&app_id=250528&clienttype=0&' \
           f'sign={parse.quote(sign_str)}&timestamp={timestamp}&fidlist=%5B{",".join([str(i) for i in fs_id])}%5D'
     info = util.dict_to_object(json.loads(requests.get(url, headers=get_randsk_headers(), timeout=30).text))
-    if not info.errno == 0:
+    if info.errno != 0:
         return []
-    url = []
-    for dl in info.dlink:
-        url.append(get_real_url_by_dlink(dl['dlink']))
+    url = [get_real_url_by_dlink(dl['dlink']) for dl in info.dlink]
     return url
 
 
@@ -75,10 +74,18 @@ def get_local_download_link(path: str):
             json.loads(requests.get(url, headers=headers, timeout=30).text))
         if info.get('error_code'):
             return False
-        if not info.get('urls'):
-            return False
-
-        return list(map(lambda x: 'https://' + x['url'][7:] if x['url'][:7] == 'http://' else x['url'], info.urls))
+        return (
+            list(
+                map(
+                    lambda x: 'https://' + x['url'][7:]
+                    if x['url'][:7] == 'http://'
+                    else x['url'],
+                    info.urls,
+                )
+            )
+            if info.get('urls')
+            else False
+        )
     except Exception as e:
         print('get_local_download_link error:\n %s' % e)
         return False

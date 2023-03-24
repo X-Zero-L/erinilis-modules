@@ -16,11 +16,10 @@ weapon_bg = Image.open(assets_dir / 'player_info' / "weapon_bg.png")
 weapon_icon_dir = assets_dir / 'player_info' / 'weapon'
 abyss_star_bg = Image.open(assets_dir / 'player_info' / "深渊星数.png").convert('RGBA')
 
-weapon_card_bg = {}
-for i in range(1 ,6):
-    weapon_card_bg[i] = Image.open(assets_dir / 'player_info' / f"{i}星武器.png")
-
-
+weapon_card_bg = {
+    i: Image.open(assets_dir / 'player_info' / f"{i}星武器.png")
+    for i in range(1, 6)
+}
 QQ_Avatar = True  # 是否使用QQ头像
 
 # 以下2个选项控制显示深渊星数 已经角色武器信息, 可能会使用额外的cookie次数
@@ -81,7 +80,11 @@ async def avatar_card(avatar_id, level, constellation, fetter, detail_info):
 
         draw_text_by_line(name_img, (132.48, 34.01), f'Lv.{weapon_info.level}', get_font(14), '#475463', 226, True)
 
-        affix_name = weapon_info.affix_level == 5 and 'MAX' or f'{weapon_info.affix_level}阶'
+        affix_name = (
+            'MAX'
+            if weapon_info.affix_level == 5
+            else f'{weapon_info.affix_level}阶'
+        )
         draw_text_by_line(name_img, (120, 53.39), f'精炼{affix_name}', get_font(18), '#cc9966', 226, True)
 
         weapon_card = easy_alpha_composite(weapon_card, name_img, (new_weapon_card_bg.width, 0))
@@ -121,7 +124,7 @@ async def draw_info_card(uid, qid, nickname, raw_data, max_chara=None, group_id=
 
     detail_info = None
     detail_info_height = 0
-    if max_chara == None and SHOW_WEAPON_INFO:
+    if max_chara is None and SHOW_WEAPON_INFO:
         detail_info = await gen_detail_info(
             uid, [x.id for x in raw_data.avatars if not x.get('weapon')], qid,
             group_id)
@@ -192,36 +195,81 @@ async def draw_info_card(uid, qid, nickname, raw_data, max_chara=None, group_id=
     text_draw.text((860, 1197), stats.luxurious_chest.__str__(), '#caae93', get_font(36))
     # 蒙德
     world = world_explorations['蒙德']
-    text_draw.text((370, 1370), str(world.exploration_percentage) + '%', '#d4aa6b', get_font(32))
-    text_draw.text((370, 1414), 'Lv.' + str(world.level), '#d4aa6b', get_font(32))
+    text_draw.text(
+        (370, 1370),
+        f'{str(world.exploration_percentage)}%',
+        '#d4aa6b',
+        get_font(32),
+    )
+    text_draw.text((370, 1414), f'Lv.{str(world.level)}', '#d4aa6b', get_font(32))
     text_draw.text((370, 1456), stats.anemoculus.__str__(), '#d4aa6b', get_font(32))
     # 璃月
     world = world_explorations['璃月']
-    text_draw.text((896, 1370), str(world.exploration_percentage) + '%', '#d4aa6b', get_font(32))
-    text_draw.text((896, 1414), 'Lv.' + str(world.level), '#d4aa6b', get_font(32))
+    text_draw.text(
+        (896, 1370),
+        f'{str(world.exploration_percentage)}%',
+        '#d4aa6b',
+        get_font(32),
+    )
+    text_draw.text((896, 1414), f'Lv.{str(world.level)}', '#d4aa6b', get_font(32))
     text_draw.text((896, 1456), stats.geoculus.__str__(), '#d4aa6b', get_font(32))
     # 雪山
     world = world_explorations['龙脊雪山']
-    text_draw.text((350, 1555), str(world.exploration_percentage) + '%', '#d4aa6b', get_font(32))
-    text_draw.text((350, 1612), 'Lv.' + str(world.level), '#d4aa6b', get_font(32))
+    text_draw.text(
+        (350, 1555),
+        f'{str(world.exploration_percentage)}%',
+        '#d4aa6b',
+        get_font(32),
+    )
+    text_draw.text((350, 1612), f'Lv.{str(world.level)}', '#d4aa6b', get_font(32))
     # 稻妻
     world = world_explorations['稻妻']
-    text_draw.text((880, 1543), str(world.exploration_percentage) + '%', '#d4aa6b', get_font(24))
-    text_draw.text((880, 1576), 'Lv.' + str(world.level), '#d4aa6b', get_font(24))
-    text_draw.text((880, 1606), 'Lv.' + str(world.offerings[0].level), '#d4aa6b', get_font(24))
+    text_draw.text(
+        (880, 1543),
+        f'{str(world.exploration_percentage)}%',
+        '#d4aa6b',
+        get_font(24),
+    )
+    text_draw.text((880, 1576), f'Lv.{str(world.level)}', '#d4aa6b', get_font(24))
+    text_draw.text(
+        (880, 1606),
+        f'Lv.{str(world.offerings[0].level)}',
+        '#d4aa6b',
+        get_font(24),
+    )
     text_draw.text((880, 1639), stats.electroculus.__str__(), '#d4aa6b', get_font(24))
-    
+
     # 渊下宫
     world = world_explorations.get('渊下宫')
-    text_draw.text((350, 1769), str(world.exploration_percentage ) + '%' if world else "未探索", '#d4aa6b', get_font(24))
+    text_draw.text(
+        (350, 1769),
+        f'{str(world.exploration_percentage)}%' if world else "未探索",
+        '#d4aa6b',
+        get_font(24),
+    )
 
     # 层岩巨渊 层岩巨渊·地下矿区
     world = world_explorations.get('层岩巨渊')
-    text_draw.text((880, 1728), str(world.exploration_percentage) + '%' if world else "未探索", '#d4aa6b', get_font(24))
-    text_draw.text((880, 1813), 'Lv.' + str(world.offerings[0].level) if world else "未探索", '#d4aa6b', get_font(24))
+    text_draw.text(
+        (880, 1728),
+        f'{str(world.exploration_percentage)}%' if world else "未探索",
+        '#d4aa6b',
+        get_font(24),
+    )
+    text_draw.text(
+        (880, 1813),
+        f'Lv.{str(world.offerings[0].level)}' if world else "未探索",
+        '#d4aa6b',
+        get_font(24),
+    )
     world = world_explorations.get('层岩巨渊·地下矿区')
-    text_draw.text((880, 1769), str(world.exploration_percentage) + '%' if world else "未探索", '#d4aa6b', get_font(24))
-    
+    text_draw.text(
+        (880, 1769),
+        f'{str(world.exploration_percentage)}%' if world else "未探索",
+        '#d4aa6b',
+        get_font(24),
+    )
+        
 
     # 深渊星数
     if SHOW_SPIRAL_ABYSS_STAR:
@@ -230,9 +278,10 @@ async def draw_info_card(uid, qid, nickname, raw_data, max_chara=None, group_id=
             raise Exception(abyss_info.message)
 
         if abyss_info.data.total_star > 36:
-            total_star = sum([
-                x.star for x in abyss_info.data.floors if x.index > 8
-            ]) or abyss_info.data.total_star
+            total_star = (
+                sum(x.star for x in abyss_info.data.floors if x.index > 8)
+                or abyss_info.data.total_star
+            )
         else:
             total_star = abyss_info.data.total_star
 

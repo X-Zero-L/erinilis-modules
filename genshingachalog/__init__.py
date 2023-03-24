@@ -49,8 +49,7 @@ async def check_bind(ctx) -> gacha_log:
     if not log_db:
         await _bot.send(ctx, bind_help.format(comm=config.comm.bind))
         return
-    gl = gacha_log.gacha_log(uid, log_db['authkey'], log_db.get('region'))
-    return gl
+    return gacha_log.gacha_log(uid, log_db['authkey'], log_db.get('region'))
 
 
 async def get_log(ctx):
@@ -73,7 +72,7 @@ async def gacha_statistics(ctx):
     if is_expired:
         msg += '凭证已过期, 仅能查询上一次的结果 \n'
 
-    await _bot.send(ctx, msg + '正在处理 请稍等')
+    await _bot.send(ctx, f'{msg}正在处理 请稍等')
     await _bot.send(ctx, await log.update_xlsx(is_expired), at_sender=True)
 
 
@@ -87,7 +86,7 @@ async def main(session: NoticeSession):
         return
 
     await session.send('检测到卡池记录文件.正在导入数据', at_sender=True)
-    if file['size'] / 1024 / 1024 > 5:
+    if file['size'] > 5242880:
         await session.send('档案过大,确保正确的文件,后请联系作者修改限制', at_sender=True)
         return
 
@@ -102,19 +101,17 @@ async def main(session: NoticeSession):
 
     gacha_data = dict(zip(gacha_data[::2], raw_data))
 
-    log_db = db.get(uid, {})
-    if not log_db:
-        region = 'cn_gf01'
-        if json_data.uid[0] == "5":
-            region = 'cn_qd01'
-        gacha_data = {'authkey': "", 'region': region}
-        gacha_data.update(gacha_data)
-        db[uid] = gacha_data
-        await session.send('导入成功~', at_sender=True)
-    else:
+    if log_db := db.get(uid, {}):
         lg = gacha_log.gacha_log(uid, log_db['authkey'], log_db.get('region'))
         try:
             count = await lg.merge_gacha_json(json_data.uid, gacha_data)
-            await session.send('合并成功~ 一共导入了%s条数据' % count, at_sender=True)
+            await session.send(f'合并成功~ 一共导入了{count}条数据', at_sender=True)
         except Exception as e:
             await session.send(e.args[0], at_sender=True)
+
+    else:
+        region = 'cn_qd01' if json_data.uid[0] == "5" else 'cn_gf01'
+        gacha_data = {'authkey': "", 'region': region}
+        gacha_data |= gacha_data
+        db[uid] = gacha_data
+        await session.send('导入成功~', at_sender=True)
