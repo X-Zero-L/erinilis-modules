@@ -47,8 +47,7 @@ async def request_mergeface(target, bot, ev):
     try:
         response = await aiorequests.post(BASE_URL, data=dict(params, **target), timeout=30)
         info = await response.json()
-        error_message = info.get('error_message')
-        if error_message:
+        if error_message := info.get('error_message'):
             print(error_message)
             if 'CONCURRENCY_LIMIT_EXCEEDED' in error_message:  # 判断是否是QPS
                 time.sleep(1)
@@ -74,15 +73,15 @@ def get_error_msg(error_message):
     if 'IMAGE_FILE_TOO_LARGE' in error_message:
         return f'第{index}张图像文件太大。'
     if 'BAD_FACE' in error_message:
-        return f'图片人脸不符合要求。'
+        return '图片人脸不符合要求。'
     if 'INVALID_RECTANGLE' in error_message:
         return f'第{index}张人脸框格式不符合要求，或者人脸框位于图片外。'
     if 'IMAGE_DOWNLOAD_TIMEOUT' in error_message:
         return f'第{index}张图片超时。'
     # 通用
     if 'AUTHENTICATION_ERROR' in error_message:
-        return f'api_key和api_secret不匹配。'
+        return 'api_key和api_secret不匹配。'
     if 'AUTHORIZATION_ERROR' in error_message:
-        return f'api_key没有调用本API的权限，具体原因为：用户自己禁止该api_key调用、管理员禁止该api_key调用、由于账户余额不足禁止调用'
+        return 'api_key没有调用本API的权限，具体原因为：用户自己禁止该api_key调用、管理员禁止该api_key调用、由于账户余额不足禁止调用'
     if 'INTERNAL_ERROR' in error_message:
-        return f'服务器内部错误，当此类错误发生时请再次请求，如果持续出现此类错误，请及时联系技术支持团队。'
+        return '服务器内部错误，当此类错误发生时请再次请求，如果持续出现此类错误，请及时联系技术支持团队。'

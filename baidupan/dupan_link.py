@@ -22,7 +22,7 @@ def parse_bdpan(link: str):
 def parse_ali213(link: str):
     f = re.sub(r'\s', '', link)[len('BDLINK'):]
     f = bytearray(base64.b64decode(f))
-    if f[0:5] != b'BDFS\x00':
+    if f[:5] != b'BDFS\x00':
         return None
 
     def read_number(index, size):
@@ -44,7 +44,7 @@ def parse_ali213(link: str):
 
     total = read_uint(5)
     ptr = 9
-    ff = list()
+    ff = []
     for _ in range(total):
         # size (8 bytes)
         # MD5 + MD5S (0x20)
@@ -86,10 +86,10 @@ def parse_bdlink(link: str):
     f = link.split('\n')
     f = map(lambda x: x.strip(), f)
     f = filter(lambda x: len(x) > 0, f)
-    f = map(lambda x: re.search(r'bdlink=([^&#?]*)', x, re.I).group(1), f)
+    f = map(lambda x: re.search(r'bdlink=([^&#?]*)', x, re.I)[1], f)
     f = map(lambda x: base64_decodestring(x), f)
     f = map(lambda x: pan_parse(x), f)
-    ff = list()
+    ff = []
     for x in f:
         ff.extend(x)
     return ff
@@ -99,17 +99,14 @@ def to_bdlink(ru_list):
     ru_list = ru_list if isinstance(ru_list, list) else [ru_list]
     f = map(lambda x: x if isinstance(x, dulink) else dulink.make(**x), ru_list)
     f = map(lambda x: x.to_mengji_link(), f)
-    ff = []
-    for x in f:
-        ff.append(x)
+    ff = list(f)
     return 'https://pan.baidu.com/#bdlink=%s' % (base64_encodestring('\n'.join(ff)).replace('\n', ''))
 
 
 def pan_parse(pan_url: str):
     pan_url = pan_url.strip()
-    mc = re.search(r'mc=(\S+)', pan_url)
-    if mc:
-        pan_url = parse.unquote(mc.group(1))
+    if mc := re.search(r'mc=(\S+)', pan_url):
+        pan_url = parse.unquote(mc[1])
     if re.search(r'^bdpan:', pan_url, re.I):
         return parse_bdpan(pan_url)
     elif re.search(r'^BDLINK', pan_url):
@@ -142,15 +139,15 @@ class dulink:
         return c
 
     def to_pandownload_link(self):
-        return 'bdpan://%s' % base64_encodestring('%s|%s|%s|%s' % (self.name, self.size, self.md5, self.md5s)).replace(
-            '\n', '')
+        return 'bdpan://%s' % base64_encodestring(
+            f'{self.name}|{self.size}|{self.md5}|{self.md5s}'
+        ).replace('\n', '')
 
     def to_mengji_link(self):
-        return '%s#%s#%s#%s' % (self.md5.upper(), self.md5s.upper(), self.size, self.name)
+        return f'{self.md5.upper()}#{self.md5s.upper()}#{self.size}#{self.name}'
 
     def to_pcsgo_link(self):
-        return 'BaiduPCS-Go rapidupload -length=%s -md5=%s -slicemd5=%s "%s"' % (
-            self.size, self.md5.lower(), self.md5s.lower(), self.name.replace('"', '%22'))
+        return f"""BaiduPCS-Go rapidupload -length={self.size} -md5={self.md5.lower()} -slicemd5={self.md5s.lower()} "{self.name.replace('"', '%22')}\""""
 
     def __repr__(self):
         return 'size: %d, md5: %s, md5s: %s, name: %s' % (self.size, self.md5, self.md5s, self.name)

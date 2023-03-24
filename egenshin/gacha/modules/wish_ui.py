@@ -32,8 +32,7 @@ class wish_ui:
     def get_assets(path) -> PngImagePlugin.PngImageFile:
         base_path = assets_dir
 
-        cache = cache_img.get(path)
-        if cache:
+        if cache := cache_img.get(path):
             return copy.deepcopy(cache)
         else:
             cache_img[path] = Image.open(str(base_path / path))
@@ -41,25 +40,27 @@ class wish_ui:
 
     @staticmethod
     def item_bg(rank):
-        return wish_ui.get_assets('%s_background.png' % str(rank)).resize((143, 845))
+        return wish_ui.get_assets(f'{str(rank)}_background.png').resize((143, 845))
 
     @staticmethod
     def rank_icon(rank):
-        return wish_ui.get_assets('%s_star.png' % str(rank))
+        return wish_ui.get_assets(f'{str(rank)}_star.png')
 
     @staticmethod
     async def create_item(rank, item_type, name, element):
         if cache_item.get(name):
             return cache_item[name]
         bg = wish_ui.item_bg(rank)
-        item_img = wish_ui.get_assets(Path(item_type) / (name + '.png'))
+        item_img = wish_ui.get_assets(Path(item_type) / f'{name}.png')
         rank_img = wish_ui.rank_icon(rank).resize((119, 30))
 
         if item_type == '角色':
             item_img = item_img.resize((item_img.size[0] + 12, item_img.size[1] + 45))
             item_img.alpha_composite(rank_img, (4, 510))
 
-            item_type_icon = wish_ui.get_assets(Path('元素') / (element + '.png')).resize((80, 80))
+            item_type_icon = wish_ui.get_assets(
+                Path('元素') / f'{element}.png'
+            ).resize((80, 80))
             item_img.alpha_composite(item_type_icon, (18, 420))
             bg.alpha_composite(item_img, (3, 125))
 
@@ -67,9 +68,10 @@ class wish_ui:
             bg.alpha_composite(item_img, (3, 240))
             bg.alpha_composite(rank_img, (9, 635))
 
-            item_type_icon = type_json.get(name)
-            if item_type_icon:
-                item_type_icon = wish_ui.get_assets(Path('类型') / (item_type_icon + '.png')).resize((100, 100))
+            if item_type_icon := type_json.get(name):
+                item_type_icon = wish_ui.get_assets(
+                    Path('类型') / f'{item_type_icon}.png'
+                ).resize((100, 100))
 
                 bg.alpha_composite(item_type_icon, (18, 530))
         cache_item[name] = bg

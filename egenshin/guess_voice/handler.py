@@ -58,13 +58,13 @@ async def get_random_voice(name, language='中'):
     if language == '中':
         # 如果是中文 则选择米游社的源
         mys_list = await voice_list_by_mys()
-        char_voices = mys_list.get(char_name)
-        if not char_voices:
+        if char_voices := mys_list.get(char_name):
+            voice_list = await voice_detail_by_mys(char_voices.content_id)
+        else:
             return
-        voice_list = await voice_detail_by_mys(char_voices.content_id)
     else:
         voice_list = voice_db.get(char_name)
-     
+
     if not voice_list:
         return
     temp_voice_list = []
@@ -74,16 +74,16 @@ async def get_random_voice(name, language='中'):
             temp_voice_list.append(voice_path)
     if not temp_voice_list:
         return
-    
+
     voice_path = random.choice(temp_voice_list)
-    
+
     if language == '中':
         # 如果是中文 则选择米游社的源
         path = os.path.join(data_path, language, char_name, os.path.basename(voice_path))
         await util.require_file(file=path, url=voice_path)
     else:
         path = os.path.join(data_path, voice_path)
-    
+
     return path
 
 
@@ -99,9 +99,7 @@ class Guess:
         self.group = process.get(self.group_id)
 
     def is_start(self):
-        if not self.group:
-            return False
-        return self.group['start']
+        return self.group['start'] if self.group else False
 
     def set_start(self):
         process[self.group_id] = {'start': True}
@@ -140,7 +138,7 @@ class Guess:
 
         temp_voice_list = []
         for v in db_dict[answer]:
-            if not (answer in v['text']):
+            if answer not in v['text']:
                 voice_path = get_voice_by_language(v, language)
                 if voice_path:
                     temp_voice_list.append(voice_path)
@@ -157,7 +155,7 @@ class Guess:
             await util.require_file(file=path, url=voice_path)
         else:
             path = os.path.join(data_path, voice_path)
-            
+
 
         # 记录答案
         process[self.group_id] = {
@@ -166,7 +164,7 @@ class Guess:
             'ok': set()
         }
 
-        job_id = str(self.group_id) + '_guess_voice'
+        job_id = f'{str(self.group_id)}_guess_voice'
         if scheduler.get_job(job_id, 'default'):
             scheduler.remove_job(job_id, 'default')
 
@@ -179,14 +177,14 @@ class Guess:
                           jobstore='default',
                           max_instances=1)
 
-        
-        print('答案: ' + answer)
+
+        print(f'答案: {answer}')
         return MessageSegment.record(f'file:///{path}')
 
     async def start2(self):
         # hard mode
         if not os.path.exists(data2_path):
-            print('请到github下载genshin_voice压缩包解压到 ' + data2_path)
+            print(f'请到github下载genshin_voice压缩包解压到 {data2_path}')
             raise Exception('困难模式语音文件夹不存在')
 
         names = list(voice2_db.keys())
@@ -214,7 +212,7 @@ class Guess:
             'ok': set()
         }
 
-        job_id = str(self.group_id) + '_guess_voice'
+        job_id = f'{str(self.group_id)}_guess_voice'
         if scheduler.get_job(job_id, 'default'):
             scheduler.remove_job(job_id, 'default')
 
@@ -237,10 +235,11 @@ class Guess:
         ok_list = list(process[self.group_id]['ok'])
         if len(ok_list) > 1:  # 只允许1个人猜对
             return
-        if not ok_list:
-            msg = '还没有人猜中呢'
-        else:
-            msg = '回答正确的人: ' + ' '.join([str(MessageSegment.at(qq)) for qq in ok_list])
+        msg = (
+            '回答正确的人: ' + ' '.join([str(MessageSegment.at(qq)) for qq in ok_list])
+            if ok_list
+            else '还没有人猜中呢'
+        )
         msg = '正确答案是 %s\n%s' % (self.group['answer'], msg)
         try:
             await get_bot().send_group_msg(group_id=self.group_id, message=msg)

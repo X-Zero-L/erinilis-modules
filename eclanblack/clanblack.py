@@ -50,11 +50,13 @@ async def print_cbl(cbl_list, bot, ev):
 
 def filter_cbl(target):
     res = []
-    if target == '' or target == '/' or target == '0':
+    if target in ['', '/', '0']:
         return res
-    for item in clan_black_list_data:
-        if item['uid'] == target or item['qq'] == target:
-            res.append(item)
+    res.extend(
+        item
+        for item in clan_black_list_data
+        if item['uid'] == target or item['qq'] == target
+    )
     return res
 
 
@@ -64,12 +66,15 @@ async def update_black_list():
         url = f'https://docs.qq.com/dop-api/opendoc?outformat=1&normal=1&preview_token=&t={int(time.time())}&id=DV1JqSHJ5aEVNUG1q&tab=BB08J2'
         info = json.loads(requests.get(url).text)
         sheet = info['clientVars']['collab_client_vars']['initialAttributedText']['text'][0][6][0]['c'][1]
-        sheet_list = list_split([i for i in sheet.values()], blank_column + blank_head + data_count)[keep_head_column:]
+        sheet_list = list_split(
+            list(sheet.values()), blank_column + blank_head + data_count
+        )[keep_head_column:]
         clan_black_list_data.clear()
         for info in sheet_list:
-            black_list = []
-            for item in info[blank_head:blank_head + data_count]:
-                black_list.append(f'{item["2"][1]}' if item.get('2') else '')
+            black_list = [
+                f'{item["2"][1]}' if item.get('2') else ''
+                for item in info[blank_head : blank_head + data_count]
+            ]
             if ''.join(black_list).strip():
                 clan_black_list_data.append(dict(zip(data_name, black_list)))
         print('定时任务: 更新工会战黑名单成功')

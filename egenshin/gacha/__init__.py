@@ -33,7 +33,7 @@ prefix = '原神'
 #     await bot.send(ev, wish_info.data.item_name)
 
 
-@sv.on_prefix(prefix + '十连')
+@sv.on_prefix(f'{prefix}十连')
 async def gacha(bot, ev):
     gacha_type, gacha_name, gacha_data = await handle_msg(bot, ev)
     wish_info = await wish(ev.user_id, gacha_type, gacha_data).ten()
@@ -41,11 +41,11 @@ async def gacha(bot, ev):
     await bot.send(ev, MessageSegment.image(img), at_sender=True)
 
 
-@sv.on_prefix(prefix + '一单')
+@sv.on_prefix(f'{prefix}一单')
 async def gacha(bot, ev):
     gacha_type, gacha_name, gacha_data = await handle_msg(bot, ev)
     x5 = []
-    for i in range(0, 5):
+    for _ in range(5):
         x5.append(await wish(ev.user_id, gacha_type, gacha_data).ten())
     img = await wish_ui.ten_b64_img_xn(x5)
     await bot.send(ev, MessageSegment.image(img), at_sender=True)
@@ -57,7 +57,7 @@ async def handle_msg(bot, ev):
         msg = '限定2'
     gacha_type = gacha_type_by_name(msg)
     if not gacha_type:
-        await bot.finish(ev, '不存在此卡池: %s' % msg)
+        await bot.finish(ev, f'不存在此卡池: {msg}')
     gacha_name, gacha_data = await gacha_pool(gacha_type=gacha_type)
     return gacha_type, gacha_name, gacha_data
 

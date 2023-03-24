@@ -108,17 +108,14 @@ def from_log_file():
     with log_file.open() as f:
         log = f.read()
     url = re.search(r'.+gacha/index.html?(.+)', log)
-    if not url:
-        return msg('请在游戏内先F3打开抽卡页面后,点击下面的历史记录后在继续')
-    return url.group(1)
+    return url[1] if url else msg('请在游戏内先F3打开抽卡页面后,点击下面的历史记录后在继续')
 
 
 def bind(server, qq):
     if not qq.isdigit() or int(qq) < 1:
         return msg('只能输入数字啦')
 
-    url = from_log_file()
-    if url:
+    if url := from_log_file():
         handle_bind(url, server, qq)
         sys.exit()
 

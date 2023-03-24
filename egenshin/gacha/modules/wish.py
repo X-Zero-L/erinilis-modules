@@ -26,7 +26,11 @@ def gacha_type_by_name(name):
 
 
 def is_character_gacha(gacha_type):
-    return gacha_type == GACHA_TYPE.activity.value or gacha_type == GACHA_TYPE.activity2.value or gacha_type == GACHA_TYPE.permanent.value
+    return gacha_type in [
+        GACHA_TYPE.activity.value,
+        GACHA_TYPE.activity2.value,
+        GACHA_TYPE.permanent.value,
+    ]
 
 
 def random_int():
@@ -112,7 +116,11 @@ class wish:
         else:
             self.user.count_5 = 1
             self.user.inc_count(4)
-            if self.gacha_type == GACHA_TYPE.activity.value or self.gacha_type == GACHA_TYPE.activity2.value or self.gacha_type == GACHA_TYPE.weapon.value:
+            if self.gacha_type in [
+                GACHA_TYPE.activity.value,
+                GACHA_TYPE.activity2.value,
+                GACHA_TYPE.weapon.value,
+            ]:
                 # 如果是限定池或者武器池
                 self.user.is_up = not is_up
 
@@ -124,16 +132,12 @@ class wish:
         }
         if rank == 3:
             res['data'] = random.choice(self.gacha_pool.r3_prob_list)
+        elif is_up:
+            res['data'] = random.choice(self.gacha_pool[f'r{rank}_up_items'])
         else:
-            if is_up:
-                res['data'] = random.choice(self.gacha_pool['r%s_up_items' % rank])
-            else:
-                res['data'] = random.choice(self.gacha_pool['r%s_prob_list' % rank])
+            res['data'] = random.choice(self.gacha_pool[f'r{rank}_prob_list'])
 
         return dict_to_object(res)
 
     async def ten(self):
-        res = []
-        for i in range(0, 10):
-            res.append(self.once())
-        return res
+        return [self.once() for _ in range(10)]

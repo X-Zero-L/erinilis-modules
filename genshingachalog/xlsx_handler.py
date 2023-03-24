@@ -40,11 +40,11 @@ async def write_xlsx(data):
     player_uid = data['301'][0]['uid']
 
     workbook = xlsxwriter.Workbook(os.path.join(out_dir, f'{player_uid}.xlsx'))
+    header = "时间,名称,类别,星级,总次数,保底内"
     for _id in gacha_type_ids:
         gachaDictList = data.get(_id, [])
         gachaTypeName = gachaTypeDict[_id]
         gachaDictList.reverse()
-        header = "时间,名称,类别,星级,总次数,保底内"
         worksheet = workbook.add_worksheet(gachaTypeName)
         content_css = workbook.add_format(
             {"align": "left", "font_name": "微软雅黑", "border_color": "#c4c2bf", "bg_color": "#ebebeb", "border": 1})
@@ -60,8 +60,7 @@ async def write_xlsx(data):
         worksheet.freeze_panes(1, 0)
         idx = 0
         pdx = 0
-        i = 0
-        for gacha in gachaDictList:
+        for i, gacha in enumerate(gachaDictList):
             time = gacha["time"]
             name = gacha["name"]
             item_type = gacha["item_type"]
@@ -74,8 +73,6 @@ async def write_xlsx(data):
                 worksheet.write(f"{excel_col[j]}{i + 2}", excel_data[j], content_css)
             if excel_data[3] == 5:
                 pdx = 0
-            i += 1
-
         star_5 = workbook.add_format({"color": "#bd6932", "bold": True})
         star_4 = workbook.add_format({"color": "#a256e1", "bold": True})
         star_3 = workbook.add_format({"color": "#8e8e8e"})

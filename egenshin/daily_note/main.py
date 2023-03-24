@@ -51,7 +51,7 @@ class Daily_Note():
             raise Login_Error(repr(e) + '\n 如果已确认打开可能是获取的cookie不正确')
 
         if json_data.retcode == 10102:
-            raise Login_Error('UID[%s]请先在米游社角色信息那打开实时便笺功能' % self.uid)
+            raise Login_Error(f'UID[{self.uid}]请先在米游社角色信息那打开实时便笺功能')
         if json_data.retcode != 0:
             raise Login_Error(json_data.message)
 
@@ -62,9 +62,9 @@ class Daily_Note():
         cookie_info = await query.get_cookie_info(self.cookie_raw)
         if not cookie_info:
             raise Account_Error('绑定的cookie获取失败,请确保已绑定游戏账号')
-        
+
         self.uid = cookie_info.game_role_id
-        return '%s_%s' % (self.qid, self.uid)
+        return f'{self.qid}_{self.uid}'
 
     async def remind(self, on=True, once_remind=None):
         once_msg = ''
@@ -80,7 +80,7 @@ class Daily_Note():
                 'group_id': self.group_id,
                 'once_remind': once_remind
             }
-            return '已打开提醒功能' + once_msg
+            return f'已打开提醒功能{once_msg}'
         else:
             if remind_db.get(db_key):
                 del remind_db[db_key]
@@ -116,12 +116,12 @@ async def notify_remind_resin(qid, group_id, info):
                                          message]))
 
 
-@scheduler.scheduled_job('cron', minute=f"*/8")
+@scheduler.scheduled_job('cron', minute="*/8")
 async def update_resin():
     # 为设置提醒的用户刷新树脂
     async for db_info, data in iter_new_resin():
         notified = False
-        remind_times = set([140, 160])
+        remind_times = {140, 160}
         once_time = db_info['once_remind']
         if once_time:
             remind_times.add(once_time)
@@ -129,7 +129,7 @@ async def update_resin():
         now = time.time()
         last_notify_time = db_info.get('last_notify_time')
         max_resin = db_info.get('max_resin') and data.current_resin == 160
-        
+
         if last_notify_time and last_notify_time + timedelta(minutes=15).seconds > int(now) or max_resin:
             # 15分钟内不重复通知
             continue
@@ -139,7 +139,7 @@ async def update_resin():
             await notify_remind_resin(db_info['qid'], db_info['group_id'], data)
             notified = True
             db_info['max_resin'] = data.current_resin == 160
-            
+
             if once_time and data.current_resin >= once_time:
                 db_info['once_remind'] = ''
 

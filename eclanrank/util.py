@@ -64,10 +64,15 @@ def init_db(db_dir, db_name='db.sqlite') -> SqliteDict:
 
 # 寻找MessageSegment里的某个关键字的位置
 def find_ms_str_index(ms, keyword, is_first=False):
-    for index, item in enumerate(ms):
-        if item['type'] == 'text' and re.search(format_reg(keyword, is_first), item['data']['text']):
-            return index
-    return -1
+    return next(
+        (
+            index
+            for index, item in enumerate(ms)
+            if item['type'] == 'text'
+            and re.search(format_reg(keyword, is_first), item['data']['text'])
+        ),
+        -1,
+    )
 
 
 # 是否是群管理员

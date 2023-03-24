@@ -5,8 +5,8 @@ from ..util import *
 # https://webstatic.mihoyo.com/hk4e/announcement/index.html?auth_appid=announcement&authkey_ver=1&bundle_id=hk4e_cn&channel_id=1&game=hk4e&game_biz=hk4e_cn&lang=zh-cn&level=57&platform=pc&region=cn_gf01&sdk_presentation_style=fullscreen&sdk_screen_transparent=true&sign_type=2&uid=105293904#/
 api_url = 'https://hk4e-api-static.mihoyo.com/common/hk4e_cn/announcement/api/'
 api_params = '?game=hk4e&game_biz=hk4e_cn&lang=zh-cn&bundle_id=hk4e_cn&level=57&platform={platform}&region={region}&uid={uid}'
-ann_content_url = '%sgetAnnContent%s' % (api_url, api_params)
-ann_list_url = '%sgetAnnList%s' % (api_url, api_params)
+ann_content_url = f'{api_url}getAnnContent{api_params}'
+ann_list_url = f'{api_url}getAnnList{api_params}'
 
 
 class ann:
@@ -39,8 +39,9 @@ class ann:
             result = []
             for data in res.data.list:
                 data_list = [
-                    x for x in data['list']
-                    if not x['ann_id'] in config.setting.ann_block
+                    x
+                    for x in data['list']
+                    if x['ann_id'] not in config.setting.ann_block
                 ]
                 data['list'] = data_list
                 result.append(data)
@@ -68,16 +69,14 @@ async def get_consume_remind_ann_ids(region, platform, uid):
 
 
 async def consume_remind(uid):
-    region = 'cn_gf01'
-    if uid[0] == "5":
-        region = 'cn_qd01'
+    region = 'cn_qd01' if uid[0] == "5" else 'cn_gf01'
     platform = ['pc']
     ids = []
     for p in platform:
         ids += await get_consume_remind_ann_ids(region, p, uid)
 
     ids = set(ids)
-    msg = '取消公告红点完毕! 一共取消了%s个' % str(len(ids))
+    msg = f'取消公告红点完毕! 一共取消了{len(ids)}个'
 
     for ann_id in ids:
         base_url = 'https://hk4e-api.mihoyo.com/common/hk4e_cn/announcement/api/'

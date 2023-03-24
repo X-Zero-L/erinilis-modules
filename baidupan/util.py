@@ -67,10 +67,15 @@ db = {}
 
 # 寻找MessageSegment里的某个关键字的位置
 def find_ms_str_index(ms, keyword, is_first=False):
-    for index, item in enumerate(ms):
-        if item['type'] == 'text' and re.search(format_reg(keyword, is_first), item['data']['text']):
-            return index
-    return -1
+    return next(
+        (
+            index
+            for index, item in enumerate(ms)
+            if item['type'] == 'text'
+            and re.search(format_reg(keyword, is_first), item['data']['text'])
+        ),
+        -1,
+    )
 
 
 # 是否是群管理员
@@ -88,12 +93,12 @@ def is_admins(user_id: int) -> bool:
 
 
 def size_format(size, is_disk=False, precision=2):
-    formats = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
     unit = 1000.0 if is_disk else 1024.0
-    if not (isinstance(size, float) or isinstance(size, int)):
+    if not isinstance(size, (float, int)):
         raise TypeError('a float number or an integer number is required!')
     if size < 0:
         raise ValueError('number must be non-negative')
+    formats = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
     for i in formats:
         size /= unit
         if size < unit:

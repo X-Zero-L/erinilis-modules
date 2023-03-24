@@ -33,9 +33,9 @@ async def decode(raw_data):
     if not oLookup:
         for i, v in enumerate(b64char):
             oLookup[v] = s[i]
-    ret = ''
-    for i, v in enumerate(raw_data):
-        ret += oLookup.get(raw_data[i], raw_data[i])
+    ret = ''.join(
+        oLookup.get(raw_data[i], raw_data[i]) for i, v in enumerate(raw_data)
+    )
     return json.loads(ret, object_hook=Dict)
 
 
@@ -57,7 +57,7 @@ async def __get_build_id__():
 
 @cache(ttl=datetime.timedelta(hours=12), arg_key='floor')
 async def get_abyss_data(floor):
-    json_url = '%s/_next/data/%s/zh/floor-%s.json' % (BASE_URL, await __get_build_id__(), floor or '12')
+    json_url = f"{BASE_URL}/_next/data/{await __get_build_id__()}/zh/floor-{floor or '12'}.json"
     res = await aiorequests.get(json_url, timeout=10)
     json_data = await res.json(object_hook=Dict)
     return await decode(json_data.pageProps.FDR)
@@ -75,7 +75,15 @@ async def abyss_use_probability(floor):
     avatar_cards = []
     for name, pr in sorted(pr_list.items(), key=lambda x: x[1], reverse=True):
         card = Image.open(assets_dir / "chara_card" / f'{name}.png')
-        draw_text_by_line(card, (0, 235), f'%s%%' % ('%.2f' % pr), get_font(35), '#475463', 226, True)
+        draw_text_by_line(
+            card,
+            (0, 235),
+            '%s%%' % ('%.2f' % pr),
+            get_font(35),
+            '#475463',
+            226,
+            True,
+        )
         avatar_cards.append(card)
     wh = ((avatar_cards[0].size[0] + 40) * col_len, math.ceil(len(avatar_cards) / col_len) * 315)
     chara_bg = Image.new('RGB', wh, '#f0ece3')
@@ -96,13 +104,13 @@ async def abyss_use_teams(floor):
     best_data_len = 3
     chara_bg = None
     for i in [1, 2, 3]:
-        avatar_a = list(data['best_%s_a' % i])[0:best_data_len]
-        avatar_b = list(data['best_%s_b' % i])[0:best_data_len]
+        avatar_a = list(data[f'best_{i}_a'])[:best_data_len]
+        avatar_b = list(data[f'best_{i}_b'])[:best_data_len]
 
         chara_bg = await use_teams_card(floor, avatar_a, avatar_b, i, best_data_len, chara_bg)
 
     info_card = Image.new('RGB', (chara_bg.size[0], chara_bg.size[1] + 120), '#f0ece3')
-    floor = '深境螺旋[第%s层] 上间/下间 阵容推荐' % data.floor
+    floor = f'深境螺旋[第{data.floor}层] 上间/下间 阵容推荐'
     draw_text_by_line(info_card, (0, 35), floor, get_font(50), '#475463', 1000, True)
     easy_paste(info_card, chara_bg.convert('RGBA'), (0, 120))
 
@@ -114,7 +122,7 @@ def sort_char_ids(ids):
     char = []
     for _id in list(filter(None, ids.split('_'))):
         data = {'id': _id}
-        data.update(character[_id])
+        data |= character[_id]
         char.append(data)
     char.sort(key=lambda x: (-x['rarity'], -int(x['id'])))
     return [x['id'] for x in char]
@@ -162,12 +170,12 @@ async def use_teams_card(floor, team_a, team_b, i, data_len=3, chara_bg=None, sp
         floor_i = f'{floor}-{i}'
         enemy_resource = 'https://gim.appsample.net/enemies/'
         for enemy_name in enemies[floor_i].a:
-            enemy_filename = enemy_name + '.png'
+            enemy_filename = f'{enemy_name}.png'
             pic = Image.open(
                 BytesIO(await require_file(enemies_img / enemy_filename, url=enemy_resource + enemy_filename)))
             enemy_a_list.append(pic.convert("RGBA"))
         for enemy_name in enemies[floor_i].b:
-            enemy_filename = enemy_name + '.png'
+            enemy_filename = f'{enemy_name}.png'
             pic = Image.open(BytesIO(await require_file(enemies_img / enemy_filename, url=enemy_resource + enemy_filename)))
             enemy_b_list.append(pic.convert("RGBA"))
 

@@ -15,7 +15,6 @@ _bot = get_bot()
 
 
 @sv.on_message('group')  # 如果使用hoshino的分群管理取消注释这行 并注释下一行的 @_bot.on_message("group")
-# @_bot.on_message  # nonebot使用这
 async def pan_main(*params):
     bot, ctx = (_bot, params[0]) if len(params) == 1 else params
 
@@ -27,7 +26,7 @@ async def pan_main(*params):
             return await bot.send(ctx, await get_share(ctx, keyword, *keyword.split(config.comm.split)))
         except TypeError as e:
             print(e)
-            await bot.send(ctx, '如果是秒传链接请尝试使用 %s' % config.comm.link2bdlink)
+            await bot.send(ctx, f'如果是秒传链接请尝试使用 {config.comm.link2bdlink}')
 
     # 获取秒传链接和直链
     keyword = util.get_msg_keyword(config.comm.get_all, msg, True)
@@ -75,7 +74,7 @@ async def get_share(ctx, keyword, pan_url: str,
                 info.md5s,
                 info.size,
                 info.name,
-                dir_name=share.get_dir_str(ctx.user_id) + '/'
+                dir_name=f'{share.get_dir_str(ctx.user_id)}/',
             )
             if not is_ok:
                 msg += f'{info.name} 获取失败啦\n'
@@ -112,7 +111,7 @@ async def get_share(ctx, keyword, pan_url: str,
             msg += f'大小: {util.size_format(int(info.size))}\n'
             msg += f'下载地址: {url}\n'
             msg += '——————————\n'
-        return msg + '请设置这个UA下载 %s' % api.get_pan_ua() if is_local else msg
+        return f'{msg}请设置这个UA下载 {api.get_pan_ua()}' if is_local else msg
 
     surl, s_pwd = share.get_surl(pan_url)
     if not surl:
@@ -137,7 +136,7 @@ async def get_share(ctx, keyword, pan_url: str,
         yun_data.uk = yun_data.share_uk
     file_list = share.get_file_list(yun_data.shareid, yun_data.uk, randsk, dir_str=dir_str)
 
-    if not file_list.errno == 0:
+    if file_list.errno != 0:
         return '文件失效或者分享被取消'
     await sp.send('正在获取文件信息')
 
@@ -187,4 +186,4 @@ async def get_ru(ctx, url_str, yun_data, randsk):
                 continue
             info.append(ru_info)
     await sp.send()
-    return '秒传链接: %s' % dupan_link.to_bdlink(info)
+    return f'秒传链接: {dupan_link.to_bdlink(info)}'

@@ -19,9 +19,7 @@ def in_time(time_str1, time_str2):
     day = str(now.date())
     t1 = datetime.datetime.strptime(day + time_str1, '%Y-%m-%d%H:%M')
     t2 = datetime.datetime.strptime(day + time_str2, '%Y-%m-%d%H:%M')
-    if t2 < t1:
-        return True
-    return now > t1 and now < t2
+    return True if t2 < t1 else now > t1 and now < t2
 
 
 async def get_time_icon():
@@ -67,7 +65,7 @@ async def draw_info_card(info: Daily_Note_Info):
 
     # 树脂完全回复时间
     resin_recovery_time = now + datetime.timedelta(seconds=int(info.resin_recovery_time))
-    resin_recovery_time_day = resin_recovery_time.day > now.day and '明天'  or '今天'
+    resin_recovery_time_day = '明天' if resin_recovery_time.day > now.day else '今天'
     resin_recovery_str = f'将于{resin_recovery_time_day} {resin_recovery_time.strftime("%H:%M:%S")} 完全回复'
     draw_text_by_line(bg, (173.09, 150.2), resin_recovery_str, get_font(16), default_text_color, 881)
 
@@ -95,9 +93,11 @@ async def draw_info_card(info: Daily_Note_Info):
 
     if info.expeditions:
         # 探索
-        first_expeditions_time = int(min([x['remained_time'] for x in info.expeditions]))
+        first_expeditions_time = int(min(x['remained_time'] for x in info.expeditions))
         first_expeditions_time = now + datetime.timedelta(seconds=first_expeditions_time)
-        first_expeditions_time_day = first_expeditions_time.day > now.day and '明天'  or '今天'
+        first_expeditions_time_day = (
+            '明天' if first_expeditions_time.day > now.day else '今天'
+        )
         first_expeditions_str = f'最快{first_expeditions_time_day} {first_expeditions_time.strftime("%H:%M:%S")} 派遣完成'
         draw_text_by_line(bg, (600, 74), first_expeditions_str, get_font(18), default_text_color, 881)
 
@@ -108,7 +108,7 @@ async def draw_info_card(info: Daily_Note_Info):
             bg = easy_alpha_composite(bg, exp_bg, (587, exp_index))
 
             exp_index += 72
-            
+
     else:
         easy_paste(bg, why_not_expedition, (579, 125))
 

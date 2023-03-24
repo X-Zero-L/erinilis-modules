@@ -40,7 +40,7 @@ async def gen_head(achi_len, all_achi_len, uid, qid, nickname, raw_data):
                       '#786a5d', 450)
 
     text_draw.text((362, 124), f'天地万象：{achi_len}/{all_achi_len}', '#414d65', get_font(35))
-    text_draw.text((910, 66), f'总成就', '#414d65', get_font(35))
+    text_draw.text((910, 66), '总成就', '#414d65', get_font(35))
     text_draw.text((930, 105), f'{achievement_number}', '#414d65', get_font(35))
 
     return new_head_img
@@ -53,8 +53,8 @@ async def item_img(info, item_space, detail):
     easy_paste(new_bg, list_bg.copy(), (0, 0))
     draw_text_by_line(new_bg, (220, 25), info.name, get_font(28), '#535250', 861)
     draw_text_by_line(new_bg, (220, 70), info.desc, get_font(25), '#b99e8b',1200)
-    reward_index = 1115
     if getattr(info, 'reward', None):
+        reward_index = 1115
         if len(info.reward) == 2:
             reward_index -= 5
         draw_text_by_line(new_bg, (reward_index, 85), info.reward, get_font(21),
@@ -119,8 +119,8 @@ async def handle(achievement):
     return new_data
 
 async def gen_item_img(data, detail=False):
-    item_space = detail and 5 or 0
-    
+    item_space = 5 if detail else 0
+
     result = []
     game_version = parse_version(await get_game_version())
 

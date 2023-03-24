@@ -52,7 +52,7 @@ class Genshin_Cookies():
         try:
             await query.request_data(uid='105293904', user_cookie=raw_cookie)
         except Exception as e:
-            raise Message('(%s) 验证失败: %s' % (account_id, str(e)))
+            raise Message(f'({account_id}) 验证失败: {str(e)}')
 
         group_cookies = set(self.db.get(group_id, []))
         group_cookies.add(raw_cookie)

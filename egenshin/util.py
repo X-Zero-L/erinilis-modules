@@ -95,11 +95,15 @@ def init_db(db_dir, db_name='db.sqlite', tablename='unnamed') -> SqliteDict:
 
 # 寻找MessageSegment里的某个关键字的位置
 def find_ms_str_index(ms, keyword, is_first=False):
-    for index, item in enumerate(ms):
-        if item['type'] == 'text' and re.search(format_reg(keyword, is_first),
-                                                item['data']['text']):
-            return index
-    return -1
+    return next(
+        (
+            index
+            for index, item in enumerate(ms)
+            if item['type'] == 'text'
+            and re.search(format_reg(keyword, is_first), item['data']['text'])
+        ),
+        -1,
+    )
 
 
 def filter_list(plist, func):
@@ -129,7 +133,7 @@ def pil2b64(data):
     data = data.convert("RGB")
     data.save(bio, format='JPEG', quality=75)
     base64_str = base64.b64encode(bio.getvalue()).decode()
-    return 'base64://' + base64_str
+    return f'base64://{base64_str}'
 
 
 private_prefix = []
@@ -143,15 +147,14 @@ async def private_handler(bot, ev, _):
     for t in trigger.chain:
         for service in t.find_handler(ev):
             sv = service.sv
-            if sv in private_prefix:
-                if priv.get_user_priv(ev) >= priv.NORMAL:
-                    try:
-                        await service.func(bot, ev)
-                    except CanceledException:
-                        raise
-                    sv.logger.info(
-                        f'Private Message {ev.message_id} triggered {service.func.__name__}.'
-                    )
+            if sv in private_prefix and priv.get_user_priv(ev) >= priv.NORMAL:
+                try:
+                    await service.func(bot, ev)
+                except CanceledException:
+                    raise
+                sv.logger.info(
+                    f'Private Message {ev.message_id} triggered {service.func.__name__}.'
+                )
 
 
 def support_private(sv):
@@ -171,7 +174,7 @@ def cache(ttl=datetime.timedelta(hours=1), **kwargs):
             nonlocal cache_data
             bound = inspect.signature(func).bind(*args, **kw)
             bound.apply_defaults()
-            ins_key = '|'.join(['%s_%s' % (k, v) for k, v in bound.arguments.items()])
+            ins_key = '|'.join([f'{k}_{v}' for k, v in bound.arguments.items()])
             default_data = {"time": None, "value": None}
             data = cache_data.get(ins_key, default_data)
 
@@ -287,8 +290,10 @@ class process:
         run = self.get()
         if not run:
             return False
-        if run.get('start_time') + self.timeout < time.time(
-        ) and not self.timeout == 0:
+        if (
+            run.get('start_time') + self.timeout < time.time()
+            and self.timeout != 0
+        ):
             self.ok()
             return False
         return bool(run.get('run'))
